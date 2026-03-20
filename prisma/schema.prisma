@@ -1,0 +1,181 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Usuario {
+  id        Int      @id @default(autoincrement())
+  correo    String   @unique
+  password  String
+  rol       Rol      @default(VENDEDOR)
+  createdAt DateTime @default(now())
+}
+
+enum Rol {
+  ADMINISTRADOR
+  VENDEDOR
+}
+
+enum EstadoProducto {
+  ACTIVO
+  INACTIVO
+}
+
+model Categoria {
+  id        Int        @id @default(autoincrement())
+  nombre    String     @unique
+  productos Producto[]
+}
+
+model Marca {
+  id        Int        @id @default(autoincrement())
+  nombre    String     @unique
+  productos Producto[]
+}
+
+model Proveedor {
+  id          Int      @id @default(autoincrement())
+  documento   Int      @unique
+  descripcion String?
+  correo      String   @unique
+  telefono    String?
+  compras     Compra[]
+  createdAt   DateTime @default(now())
+}
+
+model Color {
+  id          Int          @id @default(autoincrement())
+  nombre      String
+  productoId  Int
+  producto    Producto     @relation(fields: [productoId], references: [id])
+  inventarios Inventario[]
+}
+
+model Producto {
+  id             Int              @id @default(autoincrement())
+  nombre         String
+  descripcion    String?
+  precio         Decimal          @db.Decimal(10, 2)
+  cantidad       Int?             @default(0)
+  categoriaId    Int
+  categoria      Categoria        @relation(fields: [categoriaId], references: [id])
+  marcaId        Int
+  marca          Marca            @relation(fields: [marcaId], references: [id])
+  colores        Color[]
+  tallas         Talla_Producto[]
+  inventarios    Inventario[]
+  detallesPedido Detalle_Pedido[]
+  detallesVenta  Detalle_Venta[]
+  detallesCompra Detalle_Compra[]
+  createdAt      DateTime         @default(now())
+  estado         EstadoProducto   @default(ACTIVO)
+}
+
+model Inventario {
+  id         Int      @id @default(autoincrement())
+  productoId Int
+  producto   Producto @relation(fields: [productoId], references: [id])
+  talla      String // "S", "M", "L", "XL"
+  colorId    Int
+  color      Color    @relation(fields: [colorId], references: [id])
+  stock      Int      @default(0)
+}
+
+model Talla {
+  id        Int              @id @default(autoincrement())
+  nombre    String           @unique
+  productos Talla_Producto[]
+}
+
+model Talla_Producto {
+  id         Int      @id @default(autoincrement())
+  tallaId    Int
+  talla      Talla    @relation(fields: [tallaId], references: [id])
+  productoId Int
+  producto   Producto @relation(fields: [productoId], references: [id])
+}
+
+model Cliente {
+  id        Int      @id @default(autoincrement())
+  documento Int      @unique
+  nombre    String
+  apellido  String
+  correo    String   @unique
+  telefono  String?
+  pedidos   Pedido[]
+  ventas    Venta[]
+  createdAt DateTime @default(now())
+}
+
+model Pedido {
+  id        Int              @id @default(autoincrement())
+  clienteId Int
+  cliente   Cliente          @relation(fields: [clienteId], references: [id])
+  detalles  Detalle_Pedido[]
+  createdAt DateTime         @default(now())
+}
+
+model Detalle_Pedido {
+  id         Int      @id @default(autoincrement())
+  pedidoId   Int
+  pedido     Pedido   @relation(fields: [pedidoId], references: [id])
+  productoId Int
+  producto   Producto @relation(fields: [productoId], references: [id])
+  cantidad   Int
+  precio     Decimal  @db.Decimal(10, 2)
+}
+
+model Venta {
+  id        Int             @id @default(autoincrement())
+  clienteId Int
+  cliente   Cliente         @relation(fields: [clienteId], references: [id])
+  detalles  Detalle_Venta[]
+  createdAt DateTime        @default(now())
+}
+
+model Detalle_Venta {
+  id         Int      @id @default(autoincrement())
+  ventaId    Int
+  venta      Venta    @relation(fields: [ventaId], references: [id])
+  productoId Int
+  producto   Producto @relation(fields: [productoId], references: [id])
+  cantidad   Int
+  precio     Decimal  @db.Decimal(10, 2)
+}
+
+model Compra {
+  id          Int              @id @default(autoincrement())
+  proveedorId Int
+  proveedor   Proveedor        @relation(fields: [proveedorId], references: [id])
+  total       Decimal          @db.Decimal(10, 2)
+  detalles    Detalle_Compra[]
+  articuloId  Int?             // Permite que una compra apunte a un artículo
+  articulo    Articulo?        @relation(fields: [articuloId], references: [id])
+  createdAt   DateTime         @default(now())
+}
+
+model Detalle_Compra {
+  id         Int      @id @default(autoincrement())
+  compraId   Int
+  compra     Compra   @relation(fields: [compraId], references: [id])
+  productoId Int
+  producto   Producto @relation(fields: [productoId], references: [id])
+  cantidad   Int
+  precio     Decimal  @db.Decimal(10, 2)
+}
+
+model Articulo {
+  id          Int      @id @default(autoincrement())
+  nombre      String
+  descripcion String?
+  cantidad    Int
+  precio      Decimal  @db.Decimal(10, 2)
+  unidad      String
+  compras     Compra[] // Relación opuesta
+  createdAt   DateTime @default(now())
+}
