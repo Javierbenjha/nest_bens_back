@@ -13,6 +13,7 @@ model Usuario {
   correo    String   @unique
   password  String
   rol       Rol      @default(VENDEDOR)
+  pedidos   Pedido[]
   createdAt DateTime @default(now())
 }
 
@@ -24,6 +25,32 @@ enum Rol {
 enum EstadoProducto {
   ACTIVO
   INACTIVO
+}
+
+enum EstadoPedido {
+  PENDIENTE
+  PROCESANDO
+  PAGADO
+  ENTREGADO
+  CANCELADO
+}
+
+enum MetodoPago {
+  EFECTIVO
+  TARJETA
+  TRANSFERENCIA
+  OTRO
+}
+
+enum TipoComprobante {
+  BOLETA
+  FACTURA
+  REMAISION
+}
+
+enum TipoCupon {
+  PORCENTAJE
+  VALOR_FIJO
 }
 
 model Categoria {
@@ -74,6 +101,7 @@ model Producto {
   detallesCompra Detalle_Compra[]
   createdAt      DateTime         @default(now())
   estado         EstadoProducto   @default(ACTIVO)
+  descuento      Decimal          @default(0.00) @db.Decimal(10, 2)
 }
 
 model Inventario {
@@ -113,21 +141,54 @@ model Cliente {
 }
 
 model Pedido {
-  id        Int              @id @default(autoincrement())
-  clienteId Int
-  cliente   Cliente          @relation(fields: [clienteId], references: [id])
-  detalles  Detalle_Pedido[]
-  createdAt DateTime         @default(now())
+  id              Int              @id @default(autoincrement())
+  clienteId       Int
+  cliente         Cliente          @relation(fields: [clienteId], references: [id])
+  usuarioId       Int? // Vendedor que atiende el pedido
+  usuario         Usuario?         @relation(fields: [usuarioId], references: [id])
+  cuponId         Int? // Cupón aplicado si existe
+  cupon           Cupon?           @relation(fields: [cuponId], references: [id])
+  subtotal        Decimal          @default(0.00) @db.Decimal(10, 2)
+  impuesto        Decimal          @default(0.00) @db.Decimal(10, 2)
+  descuento       Decimal          @default(0.00) @db.Decimal(10, 2) // Descuento Total (sumado con el del cupón)
+  descuentoCupon  Decimal          @default(0.00) @db.Decimal(10, 2) // Específico lo que ahorró por el cupón
+  total           Decimal          @default(0.00) @db.Decimal(10, 2)
+  estado          EstadoPedido     @default(PENDIENTE)
+  metodoPago      MetodoPago       @default(EFECTIVO)
+  tipoComprobante TipoComprobante  @default(BOLETA)
+  direccionEnvio  String?
+  fechaEntrega    DateTime?
+  observaciones   String?          @db.Text
+  detalles        Detalle_Pedido[]
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+}
+
+model Cupon {
+  id              Int        @id @default(autoincrement())
+  codigo          String     @unique
+  descripcion     String?
+  valor           Decimal    @db.Decimal(10, 2)
+  tipo            TipoCupon  @default(PORCENTAJE)
+  usosMaximos     Int?       @default(1)
+  usosActuales    Int        @default(0)
+  fechaExpiracion DateTime?
+  activo          Boolean    @default(true)
+  pedidos         Pedido[]
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
 }
 
 model Detalle_Pedido {
-  id         Int      @id @default(autoincrement())
-  pedidoId   Int
-  pedido     Pedido   @relation(fields: [pedidoId], references: [id])
-  productoId Int
-  producto   Producto @relation(fields: [productoId], references: [id])
-  cantidad   Int
-  precio     Decimal  @db.Decimal(10, 2)
+  id             Int      @id @default(autoincrement())
+  pedidoId       Int
+  pedido         Pedido   @relation(fields: [pedidoId], references: [id])
+  productoId     Int
+  producto       Producto @relation(fields: [productoId], references: [id])
+  cantidad       Int
+  precioUnitario Decimal  @db.Decimal(10, 2)
+  descuento      Decimal  @default(0.00) @db.Decimal(10, 2)
+  subtotal       Decimal  @db.Decimal(10, 2)
 }
 
 model Venta {

@@ -1,0 +1,6 @@
+src/modules/coupons/domain/coupon.entity.ts(8,27): error TS2304: Cannot find name 'TipoCupon'.
+src/modules/coupons/domain/coupon.repository.ts(1,24): error TS2307: Cannot find module '../entities/coupon.entity' or its corresponding type declarations.
+src/modules/coupons/infrastructure/http/coupons.controller.ts(2,40): error TS2307: Cannot find module './infrastructure/persistence/prisma-coupon.repository' or its corresponding type declarations.
+src/modules/coupons/infrastructure/http/coupons.controller.ts(3,33): error TS2307: Cannot find module './infrastructure/http/dto/create-coupon.dto' or its corresponding type declarations.
+src/modules/coupons/infrastructure/http/coupons.module.ts(3,40): error TS2307: Cannot find module './infrastructure/persistence/prisma-coupon.repository' or its corresponding type declarations.
+src/modules/coupons/infrastructure/persistence/prisma-coupon.repository.ts(3,24): error TS2307: Cannot find module '../../domain/entities/coupon.entity' or its corresponding type declarations.

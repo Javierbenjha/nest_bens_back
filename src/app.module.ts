@@ -10,6 +10,7 @@ import { SuppliersModule } from './modules/suppliers/infrastructure/http/supplie
 import { ClientsModule } from './modules/clients/infrastructure/http/clients.module';
 import { ProductsModule } from './modules/products/infrastructure/http/products.module';
 import { UsersModule } from './modules/users/infrastructure/http/users.module';
+import { OrdersModule } from './modules/orders/infrastructure/http/orders.module';
 
 // Módulos pendientes de migración o sin implementar
 import { AuthModule } from './modules/auth/auth.module';
@@ -30,6 +31,7 @@ import { LogisticsModule } from './modules/logistics/logistics.module';
     ClientsModule,
     ProductsModule,
     UsersModule,
+    OrdersModule,
     // Pendientes
     AuthModule,
     CategoriesModule,
