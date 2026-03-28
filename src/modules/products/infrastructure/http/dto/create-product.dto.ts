@@ -1,11 +1,14 @@
 import { IsArray, IsHexColor, IsNumber, IsOptional, IsString } from 'class-validator';
+import { Transform } from 'class-transformer';
 
 export class CreateProductDto {
   @IsString()
+  @Transform(({ value }) => (typeof value === 'string' ? value.toUpperCase() : value))
   nombre: string;
 
   @IsString()
   @IsOptional()
+  @Transform(({ value }) => (typeof value === 'string' ? value.toUpperCase() : value))
   descripcion?: string;
 
   @IsNumber()

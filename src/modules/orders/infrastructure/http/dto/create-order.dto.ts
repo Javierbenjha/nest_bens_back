@@ -1,5 +1,5 @@
 import { IsArray, IsInt, IsNotEmpty, IsOptional, IsString, ValidateNested } from 'class-validator';
-import { Type } from 'class-transformer';
+import { Type, Transform } from 'class-transformer';
 
 class OrderItemDto {
   @IsInt()
@@ -22,6 +22,7 @@ export class CreateOrderDto {
 
   @IsString()
   @IsOptional()
+  @Transform(({ value }) => (typeof value === 'string' ? value.toUpperCase() : value))
   cuponCodigo?: string;
 
   @IsArray()
