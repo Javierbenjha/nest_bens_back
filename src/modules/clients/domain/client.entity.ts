@@ -1,6 +1,6 @@
 export class Client {
   id?: number;
-  documento: number;
+  documento: string;
   nombre: string;
   apellido: string;
   correo: string;

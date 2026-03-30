@@ -77,7 +77,7 @@ model Marca {
 
 model Proveedor {
   id          Int      @id @default(autoincrement())
-  documento   Int      @unique
+  documento   String   @unique
   descripcion String?
   correo      String   @unique
   telefono    String?
@@ -143,7 +143,7 @@ model Talla_Producto {
 
 model Cliente {
   id        Int      @id @default(autoincrement())
-  documento Int      @unique
+  documento String   @unique
   nombre    String
   apellido  String
   correo    String   @unique

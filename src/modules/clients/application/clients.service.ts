@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { ConflictException, Inject, Injectable } from '@nestjs/common';
 import type { ClientRepository } from '../domain/client.repository';
 import type { Client } from '../domain/client.entity';
 
@@ -9,7 +9,23 @@ export class ClientsService {
     private readonly repo: ClientRepository,
   ) {}
 
-  create(client: Partial<Client>): Promise<Client> {
+  async create(client: Partial<Client>): Promise<Client> {
+    // Check if client with same document exists
+    if (client.documento) {
+      const existingByDoc = await this.repo.findByDocumento(client.documento);
+      if (existingByDoc) {
+        throw new ConflictException(`Ya existe un cliente con el documento ${client.documento}`);
+      }
+    }
+
+    // Check if client with same email exists
+    if (client.correo) {
+      const existingByEmail = await this.repo.findByEmail(client.correo);
+      if (existingByEmail) {
+        throw new ConflictException(`Ya existe un cliente con el correo ${client.correo}`);
+      }
+    }
+
     return this.repo.create(client as Client);
   }
 

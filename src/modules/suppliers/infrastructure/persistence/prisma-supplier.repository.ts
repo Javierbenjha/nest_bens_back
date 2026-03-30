@@ -9,7 +9,7 @@ export class PrismaSupplierRepository implements SupplierRepository {
 
   async create(supplier: Supplier): Promise<Supplier> {
     return this.prisma.proveedor.create({
-      data: supplier,
+      data: supplier as any,
     }) as unknown as Supplier;
   }
 
@@ -19,6 +19,14 @@ export class PrismaSupplierRepository implements SupplierRepository {
 
   async findById(id: number): Promise<Supplier | null> {
     return this.prisma.proveedor.findUnique({ where: { id } }) as unknown as Supplier | null;
+  }
+
+  async findByDocumento(documento: string): Promise<Supplier | null> {
+    return this.prisma.proveedor.findUnique({ where: { documento } }) as unknown as Supplier | null;
+  }
+
+  async findByEmail(correo: string): Promise<Supplier | null> {
+    return this.prisma.proveedor.findUnique({ where: { correo } }) as unknown as Supplier | null;
   }
 
   async update(id: number, supplier: Partial<Supplier>): Promise<Supplier> {

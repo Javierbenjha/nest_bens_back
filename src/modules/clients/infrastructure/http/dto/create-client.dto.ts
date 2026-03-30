@@ -1,10 +1,10 @@
-import { IsNumber, IsString, IsNotEmpty, IsOptional } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, IsEmail } from 'class-validator';
 import { Transform } from 'class-transformer';
 
 export class CreateClientDto {
-  @IsNumber()
+  @IsString()
   @IsNotEmpty()
-  documento: number;
+  documento: string;
 
   @IsString()
   @IsNotEmpty()
@@ -16,7 +16,7 @@ export class CreateClientDto {
   @Transform(({ value }) => (typeof value === 'string' ? value.toUpperCase() : value))
   apellido: string;
 
-  @IsString()
+  @IsEmail()
   @IsNotEmpty()
   correo: string;
 

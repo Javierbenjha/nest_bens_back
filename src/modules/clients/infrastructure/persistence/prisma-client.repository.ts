@@ -21,6 +21,14 @@ export class PrismaClientRepository implements ClientRepository {
     return this.prisma.cliente.findUnique({ where: { id } }) as unknown as Client | null;
   }
 
+  async findByDocumento(documento: string): Promise<Client | null> {
+    return this.prisma.cliente.findUnique({ where: { documento } }) as unknown as Client | null;
+  }
+
+  async findByEmail(correo: string): Promise<Client | null> {
+    return this.prisma.cliente.findUnique({ where: { correo } }) as unknown as Client | null;
+  }
+
   async update(id: number, client: Partial<Client>): Promise<Client> {
     return this.prisma.cliente.update({
       where: { id },

@@ -1,17 +1,17 @@
-import { IsNumber, IsString, IsNotEmpty, IsOptional } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, IsEmail } from 'class-validator';
 import { Transform } from 'class-transformer';
 
 export class CreateSupplierDto {
-  @IsNumber()
+  @IsString()
   @IsNotEmpty()
-  documento: number;
+  documento: string;
 
   @IsString()
   @IsOptional()
   @Transform(({ value }) => (typeof value === 'string' ? value.toUpperCase() : value))
   descripcion?: string;
 
-  @IsString()
+  @IsEmail()
   @IsNotEmpty()
   correo: string;
 
