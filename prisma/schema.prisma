@@ -101,7 +101,10 @@ model Producto {
   detallesCompra Detalle_Compra[]
   createdAt      DateTime         @default(now())
   estado         EstadoProducto   @default(ACTIVO)
-  descuento      Decimal          @default(0.00) @db.Decimal(10, 2)
+  imagenes       Json?
+  sku            String?
+  descuento      Int              @default(0)
+  valorDescuento Decimal          @default(0.00) @db.Decimal(10, 2)
 }
 
 model Inventario {

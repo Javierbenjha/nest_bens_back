@@ -1,0 +1,4 @@
+-- AlterTable
+ALTER TABLE `producto` ADD COLUMN `discountValue` DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
+    ADD COLUMN `hasDiscount` BOOLEAN NOT NULL DEFAULT false,
+    ADD COLUMN `sku` VARCHAR(191) NULL;

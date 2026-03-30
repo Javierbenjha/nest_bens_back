@@ -37,17 +37,30 @@ export class PrismaProductRepository implements ProductRepository {
         include: {
           colores: true,
           tallas: { include: { talla: true } },
+          categoria: true,
+          marca: true,
         },
       });
     }) as unknown as Product;
   }
 
   async findAll(): Promise<Product[]> {
-    return this.prisma.producto.findMany() as unknown as Product[];
+    return this.prisma.producto.findMany({
+      include: {
+        categoria: true,
+        marca: true,
+      },
+    }) as unknown as Product[];
   }
 
   async findById(id: number): Promise<Product | null> {
-    return this.prisma.producto.findUnique({ where: { id } }) as unknown as Product | null;
+    return this.prisma.producto.findUnique({
+      where: { id },
+      include: {
+        categoria: true,
+        marca: true,
+      },
+    }) as unknown as Product | null;
   }
 
   async update(id: number, product: Partial<Product>): Promise<Product> {

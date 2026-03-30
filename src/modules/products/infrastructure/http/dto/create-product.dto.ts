@@ -37,4 +37,22 @@ export class CreateProductDto {
   @IsString()
   @IsOptional()
   estado?: 'ACTIVO' | 'INACTIVO';
+
+  @IsString()
+  @IsOptional()
+  sku?: string;
+
+  @IsNumber()
+  @IsOptional()
+  @Transform(({ value }) => Number(value))
+  descuento?: number;
+
+  @IsNumber()
+  @IsOptional()
+  @Transform(({ value }) => (value ? Number(value) : value))
+  valorDescuento?: number;
+
+  @IsArray()
+  @IsOptional()
+  imagenes?: any[];
 }

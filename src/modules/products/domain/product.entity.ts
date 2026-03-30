@@ -8,5 +8,11 @@ export class Product {
   marcaId: number;
   color?: string[];
   tallas?: string[];
+  imagenes?: string[];
+  sku?: string;
+  descuento?: number;
+  valorDescuento?: number;
   createdAt?: Date;
+  categoria?: { id: number; nombre: string };
+  marca?: { id: number; nombre: string };
 }
