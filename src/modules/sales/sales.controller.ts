@@ -12,6 +12,11 @@ export class SalesController {
     return this.salesService.create(createSaleDto);
   }
 
+  @Post('from-order/:pedidoId')
+  createFromOrder(@Param('pedidoId') pedidoId: string) {
+    return this.salesService.createFromOrder(+pedidoId);
+  }
+
   @Get()
   findAll() {
     return this.salesService.findAll();
