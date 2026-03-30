@@ -35,11 +35,14 @@ enum EstadoPedido {
   CANCELADO
 }
 
-enum MetodoPago {
-  EFECTIVO
-  TARJETA
-  TRANSFERENCIA
-  OTRO
+model MedioPago {
+  id        Int      @id @default(autoincrement())
+  nombre    String   @unique
+  pedidos   Pedido[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("medio_pago")
 }
 
 
@@ -164,7 +167,8 @@ model Pedido {
   descuentoCupon  Decimal          @default(0.00) @db.Decimal(10, 2) // Específico lo que ahorró por el cupón
   total           Decimal          @default(0.00) @db.Decimal(10, 2)
   estado          EstadoPedido     @default(PENDIENTE)
-  metodoPago      MetodoPago       @default(EFECTIVO)
+  medioPagoId     Int?             // Método de pago (EFECTIVO, TARJETA, etc.)
+  medioPago       MedioPago?       @relation(fields: [medioPagoId], references: [id])
   tipoDocumentoId Int?             // Tipo de comprobante (BOLETA, FACTURA, etc.)
   tipoDocumento   TipoDocumento?   @relation(fields: [tipoDocumentoId], references: [id])
   direccionEnvio  String?

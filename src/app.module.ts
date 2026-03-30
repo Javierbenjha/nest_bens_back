@@ -12,6 +12,7 @@ import { ProductsModule } from './modules/products/infrastructure/http/products.
 import { UsersModule } from './modules/users/infrastructure/http/users.module';
 import { OrdersModule } from './modules/orders/infrastructure/http/orders.module';
 import { TypeDocumentModule } from './modules/type-document/infrastructure/http/type-document.module';
+import { PaymentMethodModule } from './modules/payment-method/infrastructure/http/payment-method.module';
 
 // Módulos pendientes de migración o sin implementar
 import { AuthModule } from './modules/auth/auth.module';
@@ -34,13 +35,13 @@ import { LogisticsModule } from './modules/logistics/logistics.module';
     UsersModule,
     OrdersModule,
     TypeDocumentModule,
+    PaymentMethodModule,
     // Pendientes
     AuthModule,
     CategoriesModule,
     InventoryModule,
     SalesModule,
     LogisticsModule,
-    TypeDocumentModule,
   ],
   controllers: [],
   providers: [],
