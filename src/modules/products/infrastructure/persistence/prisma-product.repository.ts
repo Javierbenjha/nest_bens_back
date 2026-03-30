@@ -44,13 +44,26 @@ export class PrismaProductRepository implements ProductRepository {
     }) as unknown as Product;
   }
 
-  async findAll(): Promise<Product[]> {
-    return this.prisma.producto.findMany({
-      include: {
-        categoria: true,
-        marca: true,
-      },
-    }) as unknown as Product[];
+  async findAll(page?: number, limit?: number): Promise<{ data: Product[]; total: number }> {
+    const skip = (page && limit) ? (page - 1) * limit : undefined;
+    const take = limit;
+
+    const [data, total] = await this.prisma.$transaction([
+      this.prisma.producto.findMany({
+        skip,
+        take,
+        include: {
+          categoria: true,
+          marca: true,
+        },
+      }),
+      this.prisma.producto.count(),
+    ]);
+
+    return {
+      data: data as unknown as Product[],
+      total,
+    };
   }
 
   async findById(id: number): Promise<Product | null> {

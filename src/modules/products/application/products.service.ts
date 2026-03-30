@@ -13,8 +13,17 @@ export class ProductsService {
     return this.repo.create(product as Product);
   }
 
-  findAll(): Promise<Product[]> {
-    return this.repo.findAll();
+  async findAll(page?: number, limit?: number) {
+    const { data, total } = await this.repo.findAll(page, limit);
+    return {
+      data,
+      meta: {
+        total,
+        page: page || 1,
+        lastPage: limit ? Math.ceil(total / limit) : 1,
+        limit: limit || total,
+      },
+    };
   }
 
   findOne(id: number): Promise<Product | null> {

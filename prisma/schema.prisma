@@ -42,15 +42,22 @@ enum MetodoPago {
   OTRO
 }
 
-enum TipoComprobante {
-  BOLETA
-  FACTURA
-  REMAISION
-}
+
 
 enum TipoCupon {
   PORCENTAJE
   VALOR_FIJO
+}
+
+model TipoDocumento {
+  id          Int      @id @default(autoincrement())
+  nombre      String   @unique
+  abreviatura String   @unique
+  pedidos     Pedido[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("tipo_documento")
 }
 
 model Categoria {
@@ -158,7 +165,8 @@ model Pedido {
   total           Decimal          @default(0.00) @db.Decimal(10, 2)
   estado          EstadoPedido     @default(PENDIENTE)
   metodoPago      MetodoPago       @default(EFECTIVO)
-  tipoComprobante TipoComprobante  @default(BOLETA)
+  tipoDocumentoId Int?             // Tipo de comprobante (BOLETA, FACTURA, etc.)
+  tipoDocumento   TipoDocumento?   @relation(fields: [tipoDocumentoId], references: [id])
   direccionEnvio  String?
   fechaEntrega    DateTime?
   observaciones   String?          @db.Text
