@@ -21,14 +21,14 @@ export class PrismaItemRepository implements ItemRepository {
 
   async findAll(): Promise<Item[]> {
     return this.prisma.articulo.findMany({
-      include: { compras: true },
+      include: { detallesCompra: true },
     }) as unknown as Item[];
   }
 
   async findById(id: number): Promise<Item | null> {
     return this.prisma.articulo.findUnique({
       where: { id },
-      include: { compras: true },
+      include: { detallesCompra: true },
     }) as unknown as Item | null;
   }
 

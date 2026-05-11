@@ -3,14 +3,13 @@ export class Product {
   nombre: string;
   descripcion?: string | null;
   precio: number;
-  cantidad?: number | null;
   categoriaId: number;
   marcaId: number;
   color?: string[];
   tallas?: string[];
   imagenes?: string[];
   sku?: string;
-  descuento?: number;
+  tipoDescuento?: 'PORCENTAJE' | 'VALOR_FIJO' | 'SIN_DESCUENTO';
   valorDescuento?: number;
   createdAt?: Date;
   categoria?: { id: number; nombre: string };

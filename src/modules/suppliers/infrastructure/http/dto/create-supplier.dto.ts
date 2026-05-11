@@ -7,6 +7,11 @@ export class CreateSupplierDto {
   documento: string;
 
   @IsString()
+  @IsNotEmpty()
+  @Transform(({ value }) => (typeof value === 'string' ? value.toUpperCase() : value))
+  nombre: string;
+
+  @IsString()
   @IsOptional()
   @Transform(({ value }) => (typeof value === 'string' ? value.toUpperCase() : value))
   descripcion?: string;

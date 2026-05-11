@@ -7,7 +7,10 @@ import { PrismaModule } from 'src/prisma/prisma.module';
 @Module({
   imports: [PrismaModule],
   controllers: [CouponsController],
-  providers: [PrismaCouponRepository, CouponsService],
-  exports: [PrismaCouponRepository, CouponsService],
+  providers: [
+    { provide: 'CouponRepository', useClass: PrismaCouponRepository },
+    CouponsService,
+  ],
+  exports: ['CouponRepository', CouponsService],
 })
 export class CouponsModule {}

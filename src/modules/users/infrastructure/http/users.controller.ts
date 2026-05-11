@@ -1,8 +1,13 @@
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
 import { UsersService } from '../../application/users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { ErpAccess } from '../../../../common/decorators/roles.decorator';
 
+@ApiTags('Users')
+@ApiBearerAuth()
+@ErpAccess()
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}

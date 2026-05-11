@@ -1,8 +1,13 @@
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
 import { BrandService } from '../../application/brand.service';
 import { CreateBrandDto } from './dto/create-brand.dto';
 import { UpdateBrandDto } from './dto/update-brand.dto';
+import { ErpAccess } from '../../../../common/decorators/roles.decorator';
 
+@ApiTags('Brand')
+@ApiBearerAuth()
+@ErpAccess()
 @Controller('brand')
 export class BrandController {
   constructor(private readonly brandService: BrandService) {}

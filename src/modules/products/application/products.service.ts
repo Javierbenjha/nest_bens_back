@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import type { ProductRepository } from '../domain/product.repository';
+import type { ProductFilters, ProductRepository } from '../domain/product.repository';
 import type { Product } from '../domain/product.entity';
 
 @Injectable()
@@ -13,15 +13,16 @@ export class ProductsService {
     return this.repo.create(product as Product);
   }
 
-  async findAll(page?: number, limit?: number) {
-    const { data, total } = await this.repo.findAll(page, limit);
+  async findAll(filters: ProductFilters = {}) {
+    const { page = 1, limit = 10 } = filters;
+    const { data, total } = await this.repo.findAll(filters);
     return {
       data,
       meta: {
         total,
-        page: page || 1,
-        lastPage: limit ? Math.ceil(total / limit) : 1,
-        limit: limit || total,
+        page,
+        lastPage: Math.ceil(total / limit) || 1,
+        limit,
       },
     };
   }

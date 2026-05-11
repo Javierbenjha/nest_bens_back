@@ -1,8 +1,13 @@
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
 import { ItemsService } from '../../application/items.service';
 import { CreateItemDto } from './dto/create-item.dto';
 import { UpdateItemDto } from './dto/update-item.dto';
+import { ErpAccess } from '../../../../common/decorators/roles.decorator';
 
+@ApiTags('Items')
+@ApiBearerAuth()
+@ErpAccess()
 @Controller('items')
 export class ItemsController {
   constructor(private readonly itemsService: ItemsService) {}

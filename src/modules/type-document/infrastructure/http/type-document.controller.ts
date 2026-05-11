@@ -1,8 +1,13 @@
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
 import { TypeDocumentService } from '../../application/type-document.service';
 import { CreateTypeDocumentDto } from './dto/create-type-document.dto';
 import { UpdateTypeDocumentDto } from './dto/update-type-document.dto';
+import { ErpAccess } from '../../../../common/decorators/roles.decorator';
 
+@ApiTags('Type-document')
+@ApiBearerAuth()
+@ErpAccess()
 @Controller('type-document')
 export class TypeDocumentController {
   constructor(private readonly typeDocumentService: TypeDocumentService) { }

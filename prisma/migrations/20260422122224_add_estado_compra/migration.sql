@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE `compra` ADD COLUMN `estado` ENUM('VIGENTE', 'ANULADO') NOT NULL DEFAULT 'VIGENTE';

@@ -1,7 +1,12 @@
-import { IsString, IsNotEmpty, IsOptional, IsEmail } from 'class-validator';
-import { Transform } from 'class-transformer';
+import { IsString, IsNotEmpty, IsOptional, IsEmail, IsInt } from 'class-validator';
+import { Transform, Type } from 'class-transformer';
 
 export class CreateClientDto {
+  @IsInt()
+  @IsOptional()
+  @Type(() => Number)
+  tipoDocumentoId?: number;
+
   @IsString()
   @IsNotEmpty()
   documento: string;

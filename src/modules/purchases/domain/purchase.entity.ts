@@ -1,7 +1,26 @@
+export class PurchaseDetail {
+  id?: number;
+  productoId?: number;
+  articuloId?: number;
+  tallaId?: number;
+  colorId?: number;
+  cantidad: number;
+  precio: number;
+  subtotal?: number;
+  producto?: any;
+  articulo?: any;
+  talla?: any;
+  color?: any;
+}
+
 export class Purchase {
   id?: number;
+  tipo: 'PRODUCTO' | 'ARTICULO';
+  estado?: 'VIGENTE' | 'ANULADO';
   proveedorId: number;
-  articuloId?: number | null;
-  total: number;
+  total?: number;
+  detalles: PurchaseDetail[];
+  proveedor?: any;
   createdAt?: Date;
+  updatedAt?: Date;
 }

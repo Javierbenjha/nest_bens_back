@@ -1,6 +1,5 @@
 generator client {
-  provider        = "prisma-client-js"
-  previewFeatures = ["driverAdapters"]
+  provider = "prisma-client-js"
 }
 
 datasource db {
@@ -8,18 +7,14 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Usuario {
-  id        Int      @id @default(autoincrement())
-  correo    String   @unique
-  password  String
-  rol       Rol      @default(VENDEDOR)
-  pedidos   Pedido[]
-  createdAt DateTime @default(now())
-}
+// ─────────────────────────────────────────────
+// ENUMS
+// ─────────────────────────────────────────────
 
 enum Rol {
   ADMINISTRADOR
   VENDEDOR
+  CLIENTE
 }
 
 enum EstadoProducto {
@@ -31,9 +26,303 @@ enum EstadoPedido {
   PENDIENTE
   PROCESANDO
   PAGADO
+  EN_CAMINO
   ENTREGADO
   CANCELADO
 }
+
+enum OrigenPedido {
+  ERP
+  ECOMMERCE
+}
+
+enum EstadoPago {
+  PENDIENTE
+  PAGADO
+  FALLIDO
+  REEMBOLSADO
+}
+
+enum TipoCupon {
+  PORCENTAJE
+  VALOR_FIJO
+}
+
+enum TipoDescuento {
+  PORCENTAJE
+  VALOR_FIJO
+  SIN_DESCUENTO
+}
+
+// PRODUCTO = compra para reponer inventario del catálogo
+// ARTICULO = compra de insumos/suministros internos (ERP)
+enum TipoCompra {
+  PRODUCTO
+  ARTICULO
+}
+
+enum EstadoCompra {
+  VIGENTE
+  ANULADO
+}
+
+enum TipoMovimiento {
+  INGRESO    // compra / ajuste positivo
+  EGRESO     // pedido / ajuste negativo
+  AJUSTE     // corrección manual
+  DEVOLUCION // devolución de cliente
+}
+
+// ─────────────────────────────────────────────
+// USUARIOS (ERP — autenticación y roles)
+// ─────────────────────────────────────────────
+
+model Usuario {
+  id                Int               @id @default(autoincrement())
+  correo            String            @unique
+  password          String
+  rol               Rol               @default(VENDEDOR)
+  pedidos           Pedido[]
+  ordenesProduccion OrdenProduccion[]
+  cliente           Cliente?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+}
+
+// ─────────────────────────────────────────────
+// CATÁLOGO (Ecommerce + ERP)
+// ─────────────────────────────────────────────
+
+model Categoria {
+  id        Int        @id @default(autoincrement())
+  nombre    String     @unique
+  productos Producto[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+model Marca {
+  id        Int        @id @default(autoincrement())
+  nombre    String     @unique
+  productos Producto[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+model Talla {
+  id                Int               @id @default(autoincrement())
+  nombre            String            @unique
+  inventarios       Inventario[]
+  detallesPedido    Detalle_Pedido[]
+  detallesCompra    Detalle_Compra[]
+  ordenesProduccion OrdenProduccion[]
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+}
+
+model Color {
+  id                Int               @id @default(autoincrement())
+  nombre            String
+  productoId        Int
+  producto          Producto          @relation(fields: [productoId], references: [id])
+  inventarios       Inventario[]
+  detallesPedido    Detalle_Pedido[]
+  detalleCompras    Detalle_Compra[]
+  ordenesProduccion OrdenProduccion[]
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+}
+
+model Producto {
+  id               Int                  @id @default(autoincrement())
+  nombre           String
+  descripcion      String?
+  precio           Decimal              @db.Decimal(10, 2)
+  categoriaId      Int
+  categoria        Categoria            @relation(fields: [categoriaId], references: [id])
+  marcaId          Int
+  marca            Marca                @relation(fields: [marcaId], references: [id])
+  colores          Color[]
+  inventarios      Inventario[]
+  detallesPedido   Detalle_Pedido[]
+  detallesCompra   Detalle_Compra[]
+  receta           Producto_Articulo[]  // Materiales necesarios para fabricar este producto
+  ordenesProduccion OrdenProduccion[]
+  estado           EstadoProducto       @default(ACTIVO)
+  imagenes         Json?
+  sku              String?              @unique
+  // Descuento: SIN_DESCUENTO = sin descuento, PORCENTAJE = % sobre precio, VALOR_FIJO = monto fijo
+  tipoDescuento    TipoDescuento        @default(SIN_DESCUENTO)
+  valorDescuento   Decimal              @default(0.00) @db.Decimal(10, 2)
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
+
+  @@index([tipoDescuento])
+  @@index([estado])
+}
+
+// ─────────────────────────────────────────────
+// INVENTARIO (ERP — stock por variante)
+// ─────────────────────────────────────────────
+
+model Inventario {
+  id          Int                    @id @default(autoincrement())
+  productoId  Int
+  producto    Producto               @relation(fields: [productoId], references: [id])
+  tallaId     Int
+  talla       Talla                  @relation(fields: [tallaId], references: [id])
+  colorId     Int
+  color       Color                  @relation(fields: [colorId], references: [id])
+  stock       Int                    @default(0)
+  stockMinimo Int                    @default(0)
+  precio      Decimal                @default(0.00) @db.Decimal(10, 2)
+  movimientos MovimientoInventario[]
+  createdAt   DateTime               @default(now())
+  updatedAt   DateTime               @updatedAt
+
+  // Un producto solo puede tener un registro por combinación color+talla
+  @@unique([productoId, colorId, tallaId])
+}
+
+model MovimientoInventario {
+  id           Int            @id @default(autoincrement())
+  inventarioId Int
+  inventario   Inventario     @relation(fields: [inventarioId], references: [id])
+  tipo         TipoMovimiento
+  cantidad     Int
+  stockAntes   Int
+  stockDespues Int
+  referencia   String?        // ej: "PEDIDO-12", "COMPRA-5", "AJUSTE"
+  notas        String?
+  createdAt    DateTime       @default(now())
+}
+
+// ─────────────────────────────────────────────
+// CLIENTES (Ecommerce)
+// ─────────────────────────────────────────────
+
+model Cliente {
+  id              Int            @id @default(autoincrement())
+  usuarioId       Int?           @unique  // Cuenta de acceso al ecommerce (opcional para clientes ERP)
+  usuario         Usuario?       @relation(fields: [usuarioId], references: [id])
+  tipoDocumentoId Int?
+  tipoDocumento   TipoDocumento? @relation(fields: [tipoDocumentoId], references: [id])
+  documento       String?        @unique  // Opcional: el cliente puede registrarse sin documento
+  nombre          String
+  apellido        String
+  correo          String         @unique
+  telefono        String?
+  pedidos         Pedido[]
+  direcciones     Direccion[]
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+}
+
+// ─────────────────────────────────────────────
+// PEDIDOS Y VENTAS (Ecommerce + ERP)
+// ─────────────────────────────────────────────
+
+model Pedido {
+  id              Int              @id @default(autoincrement())
+  clienteId       Int
+  cliente         Cliente          @relation(fields: [clienteId], references: [id])
+  usuarioId       Int?             // Vendedor que atiende el pedido (ERP)
+  usuario         Usuario?         @relation(fields: [usuarioId], references: [id])
+  cuponId         Int?
+  cupon           Cupon?           @relation(fields: [cuponId], references: [id])
+  subtotal        Decimal          @default(0.00) @db.Decimal(10, 2)
+  impuesto        Decimal          @default(0.00) @db.Decimal(10, 2)
+  descuento       Decimal          @default(0.00) @db.Decimal(10, 2)
+  descuentoCupon  Decimal          @default(0.00) @db.Decimal(10, 2)
+  total           Decimal          @default(0.00) @db.Decimal(10, 2)
+  origen          OrigenPedido     @default(ERP)
+  estado          EstadoPedido     @default(PENDIENTE)
+  estadoPago      EstadoPago       @default(PENDIENTE)
+  medioPagoId       Int?
+  medioPago         MedioPago?        @relation(fields: [medioPagoId], references: [id])
+  tipoComprobanteId Int?
+  tipoComprobante   TipoComprobante?  @relation(fields: [tipoComprobanteId], references: [id])
+  direccionEnvio  String?
+  fechaEntrega    DateTime?
+  observaciones   String?          @db.Text
+  detalles        Detalle_Pedido[]
+  venta           Venta?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  @@index([estado])
+  @@index([estadoPago])
+  @@index([origen])
+}
+
+model Detalle_Pedido {
+  id             Int            @id @default(autoincrement())
+  pedidoId       Int
+  pedido         Pedido         @relation(fields: [pedidoId], references: [id])
+  productoId     Int
+  producto       Producto       @relation(fields: [productoId], references: [id])
+  tallaId        Int?           // Opcional: no todos los productos tienen talla
+  talla          Talla?         @relation(fields: [tallaId], references: [id])
+  colorId        Int?           // Opcional: no todos los productos tienen color
+  color          Color?         @relation(fields: [colorId], references: [id])
+  cantidad       Int
+  precioUnitario Decimal        @db.Decimal(10, 2)
+  descuento      Decimal        @default(0.00) @db.Decimal(10, 2)
+  subtotal       Decimal        @db.Decimal(10, 2)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+}
+
+// Venta = confirmación contable de un pedido pagado. Los detalles se leen desde Pedido.detalles.
+model Venta {
+  id        Int      @id @default(autoincrement())
+  pedidoId  Int      @unique
+  pedido    Pedido   @relation(fields: [pedidoId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ─────────────────────────────────────────────
+// DIRECCIONES (Ecommerce — libreta de direcciones del cliente)
+// ─────────────────────────────────────────────
+
+model Direccion {
+  id           Int      @id @default(autoincrement())
+  clienteId    Int
+  cliente      Cliente  @relation(fields: [clienteId], references: [id])
+  alias        String   // "Casa", "Trabajo", "Principal"
+  direccion    String
+  distrito     String
+  provincia    String
+  departamento String
+  referencia   String?
+  esPrincipal  Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+// ─────────────────────────────────────────────
+// CUPONES (Ecommerce)
+// ─────────────────────────────────────────────
+
+model Cupon {
+  id              Int       @id @default(autoincrement())
+  codigo          String    @unique
+  descripcion     String?
+  valor           Decimal   @db.Decimal(10, 2)
+  tipo            TipoCupon @default(PORCENTAJE)
+  usosMaximos     Int?      @default(1)
+  usosActuales    Int       @default(0)
+  fechaExpiracion DateTime?
+  activo          Boolean   @default(true)
+  pedidos         Pedido[]
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+// ─────────────────────────────────────────────
+// MEDIOS DE PAGO Y DOCUMENTOS (Ecommerce + ERP)
+// ─────────────────────────────────────────────
 
 model MedioPago {
   id        Int      @id @default(autoincrement())
@@ -45,14 +334,18 @@ model MedioPago {
   @@map("medio_pago")
 }
 
+model TipoDocumento {
+  id          Int       @id @default(autoincrement())
+  nombre      String    @unique
+  abreviatura String    @unique
+  clientes    Cliente[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
-
-enum TipoCupon {
-  PORCENTAJE
-  VALOR_FIJO
+  @@map("tipo_documento")
 }
 
-model TipoDocumento {
+model TipoComprobante {
   id          Int      @id @default(autoincrement())
   nombre      String   @unique
   abreviatura String   @unique
@@ -60,187 +353,40 @@ model TipoDocumento {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  @@map("tipo_documento")
+  @@map("tipo_comprobante")
 }
 
-model Categoria {
-  id        Int        @id @default(autoincrement())
-  nombre    String     @unique
-  productos Producto[]
-}
-
-model Marca {
-  id        Int        @id @default(autoincrement())
-  nombre    String     @unique
-  productos Producto[]
-}
+// ─────────────────────────────────────────────
+// PROVEEDORES Y COMPRAS (ERP)
+// ─────────────────────────────────────────────
 
 model Proveedor {
   id          Int      @id @default(autoincrement())
   documento   String   @unique
+  nombre      String   // Nombre o razón social del proveedor
   descripcion String?
   correo      String   @unique
   telefono    String?
   compras     Compra[]
   createdAt   DateTime @default(now())
-}
-
-model Color {
-  id          Int          @id @default(autoincrement())
-  nombre      String
-  productoId  Int
-  producto    Producto     @relation(fields: [productoId], references: [id])
-  inventarios Inventario[]
-}
-
-model Producto {
-  id             Int              @id @default(autoincrement())
-  nombre         String
-  descripcion    String?
-  precio         Decimal          @db.Decimal(10, 2)
-  cantidad       Int?             @default(0)
-  categoriaId    Int
-  categoria      Categoria        @relation(fields: [categoriaId], references: [id])
-  marcaId        Int
-  marca          Marca            @relation(fields: [marcaId], references: [id])
-  colores        Color[]
-  tallas         Talla_Producto[]
-  inventarios    Inventario[]
-  detallesPedido Detalle_Pedido[]
-  detallesVenta  Detalle_Venta[]
-  detallesCompra Detalle_Compra[]
-  createdAt      DateTime         @default(now())
-  estado         EstadoProducto   @default(ACTIVO)
-  imagenes       Json?
-  sku            String?
-  descuento      Int              @default(0)
-  valorDescuento Decimal          @default(0.00) @db.Decimal(10, 2)
-}
-
-model Inventario {
-  id         Int      @id @default(autoincrement())
-  productoId Int
-  producto   Producto @relation(fields: [productoId], references: [id])
-  talla      String // "S", "M", "L", "XL"
-  colorId    Int
-  color      Color    @relation(fields: [colorId], references: [id])
-  stock      Int      @default(0)
-}
-
-model Talla {
-  id        Int              @id @default(autoincrement())
-  nombre    String           @unique
-  productos Talla_Producto[]
-}
-
-model Talla_Producto {
-  id         Int      @id @default(autoincrement())
-  tallaId    Int
-  talla      Talla    @relation(fields: [tallaId], references: [id])
-  productoId Int
-  producto   Producto @relation(fields: [productoId], references: [id])
-}
-
-model Cliente {
-  id        Int      @id @default(autoincrement())
-  documento String   @unique
-  nombre    String
-  apellido  String
-  correo    String   @unique
-  telefono  String?
-  pedidos   Pedido[]
-  ventas    Venta[]
-  createdAt DateTime @default(now())
-}
-
-model Pedido {
-  id              Int              @id @default(autoincrement())
-  clienteId       Int
-  cliente         Cliente          @relation(fields: [clienteId], references: [id])
-  usuarioId       Int? // Vendedor que atiende el pedido
-  usuario         Usuario?         @relation(fields: [usuarioId], references: [id])
-  cuponId         Int? // Cupón aplicado si existe
-  cupon           Cupon?           @relation(fields: [cuponId], references: [id])
-  subtotal        Decimal          @default(0.00) @db.Decimal(10, 2)
-  impuesto        Decimal          @default(0.00) @db.Decimal(10, 2)
-  descuento       Decimal          @default(0.00) @db.Decimal(10, 2) // Descuento Total (sumado con el del cupón)
-  descuentoCupon  Decimal          @default(0.00) @db.Decimal(10, 2) // Específico lo que ahorró por el cupón
-  total           Decimal          @default(0.00) @db.Decimal(10, 2)
-  estado          EstadoPedido     @default(PENDIENTE)
-  medioPagoId     Int?             // Método de pago (EFECTIVO, TARJETA, etc.)
-  medioPago       MedioPago?       @relation(fields: [medioPagoId], references: [id])
-  tipoDocumentoId Int?             // Tipo de comprobante (BOLETA, FACTURA, etc.)
-  tipoDocumento   TipoDocumento?   @relation(fields: [tipoDocumentoId], references: [id])
-  direccionEnvio  String?
-  fechaEntrega    DateTime?
-  observaciones   String?          @db.Text
-  detalles        Detalle_Pedido[]
-  venta           Venta?
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
-}
-
-model Cupon {
-  id              Int        @id @default(autoincrement())
-  codigo          String     @unique
-  descripcion     String?
-  valor           Decimal    @db.Decimal(10, 2)
-  tipo            TipoCupon  @default(PORCENTAJE)
-  usosMaximos     Int?       @default(1)
-  usosActuales    Int        @default(0)
-  fechaExpiracion DateTime?
-  activo          Boolean    @default(true)
-  pedidos         Pedido[]
-  createdAt       DateTime   @default(now())
-  updatedAt       DateTime   @updatedAt
-}
-
-model Detalle_Pedido {
-  id             Int      @id @default(autoincrement())
-  pedidoId       Int
-  pedido         Pedido   @relation(fields: [pedidoId], references: [id])
-  productoId     Int
-  producto       Producto @relation(fields: [productoId], references: [id])
-  cantidad       Int
-  precioUnitario Decimal  @db.Decimal(10, 2)
-  descuento      Decimal  @default(0.00) @db.Decimal(10, 2)
-  subtotal       Decimal  @db.Decimal(10, 2)
-}
-
-model Venta {
-  id        Int             @id @default(autoincrement())
-  pedidoId  Int?            @unique
-  pedido    Pedido?         @relation(fields: [pedidoId], references: [id])
-  clienteId Int
-  cliente   Cliente         @relation(fields: [clienteId], references: [id])
-  subtotal  Decimal         @default(0.00) @db.Decimal(10, 2)
-  impuesto  Decimal         @default(0.00) @db.Decimal(10, 2)
-  total     Decimal         @default(0.00) @db.Decimal(10, 2)
-  detalles  Detalle_Venta[]
-  createdAt DateTime        @default(now())
-}
-
-model Detalle_Venta {
-  id         Int      @id @default(autoincrement())
-  ventaId    Int
-  venta      Venta    @relation(fields: [ventaId], references: [id])
-  productoId Int
-  producto   Producto @relation(fields: [productoId], references: [id])
-  cantidad   Int
-  precio     Decimal  @db.Decimal(10, 2)
-  descuento  Decimal  @default(0.00) @db.Decimal(10, 2)
-  subtotal   Decimal  @default(0.00) @db.Decimal(10, 2)
+  updatedAt   DateTime @updatedAt
 }
 
 model Compra {
-  id          Int              @id @default(autoincrement())
-  proveedorId Int
-  proveedor   Proveedor        @relation(fields: [proveedorId], references: [id])
-  total       Decimal          @db.Decimal(10, 2)
-  detalles    Detalle_Compra[]
-  articuloId  Int?             // Permite que una compra apunte a un artículo
-  articulo    Articulo?        @relation(fields: [articuloId], references: [id])
-  createdAt   DateTime         @default(now())
+  id               Int                      @id @default(autoincrement())
+  // PRODUCTO: repone inventario del catálogo (usa Detalle_Compra)
+  // ARTICULO: compra de materia prima (usa Detalle_Compra_Articulo)
+  tipo             TipoCompra               @default(PRODUCTO)
+  estado           EstadoCompra             @default(VIGENTE)
+  proveedorId      Int
+  proveedor        Proveedor                @relation(fields: [proveedorId], references: [id])
+  total            Decimal                  @db.Decimal(10, 2)
+  detalles         Detalle_Compra[]         // Solo cuando tipo = PRODUCTO
+  detallesArticulo Detalle_Compra_Articulo[] // Solo cuando tipo = ARTICULO
+  createdAt        DateTime                 @default(now())
+  updatedAt        DateTime                 @updatedAt
+
+  @@index([tipo])
 }
 
 model Detalle_Compra {
@@ -249,17 +395,92 @@ model Detalle_Compra {
   compra     Compra   @relation(fields: [compraId], references: [id])
   productoId Int
   producto   Producto @relation(fields: [productoId], references: [id])
+  tallaId    Int?     // Opcional: solo si el producto tiene variante de talla
+  talla      Talla?   @relation(fields: [tallaId], references: [id])
+  colorId    Int?     // Opcional: solo si el producto tiene variante de color
+  color      Color?   @relation(fields: [colorId], references: [id])
   cantidad   Int
   precio     Decimal  @db.Decimal(10, 2)
+  subtotal   Decimal  @default(0.00) @db.Decimal(10, 2)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 }
 
+// Artículos = materia prima para fabricar productos (no se venden en ecommerce)
 model Articulo {
-  id          Int      @id @default(autoincrement())
-  nombre      String
-  descripcion String?
-  cantidad    Int
-  precio      Decimal  @db.Decimal(10, 2)
-  unidad      String
-  compras     Compra[] // Relación opuesta
-  createdAt   DateTime @default(now())
+  id              Int                      @id @default(autoincrement())
+  nombre          String
+  descripcion     String?
+  cantidad        Decimal                  @default(0) @db.Decimal(10, 3) // Stock actual en almacén
+  precio          Decimal                  @db.Decimal(10, 2)
+  unidad          String                   // "metros", "kg", "unidades", "rollos", etc.
+  detallesCompra  Detalle_Compra_Articulo[]
+  productosReceta Producto_Articulo[]      // Productos que usan este material
+  createdAt       DateTime                 @default(now())
+  updatedAt       DateTime                 @updatedAt
+}
+
+model Detalle_Compra_Articulo {
+  id         Int      @id @default(autoincrement())
+  compraId   Int
+  compra     Compra   @relation(fields: [compraId], references: [id])
+  articuloId Int
+  articulo   Articulo @relation(fields: [articuloId], references: [id])
+  cantidad   Decimal  @db.Decimal(10, 3) // Acepta decimales: 2.5m de tela, 0.5kg de hilo
+  precio     Decimal  @db.Decimal(10, 2) // Precio unitario al momento de la compra
+  subtotal   Decimal  @db.Decimal(10, 2)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+// ─────────────────────────────────────────────
+// FABRICACIÓN (ERP — receta y órdenes de producción)
+// ─────────────────────────────────────────────
+
+// Receta/BOM: qué materiales y cantidades necesita cada producto
+// Ejemplo: "Polo Oversize" necesita 2m de tela, 5m de hilo, 3 botones
+model Producto_Articulo {
+  id         Int      @id @default(autoincrement())
+  productoId Int
+  producto   Producto @relation(fields: [productoId], references: [id])
+  articuloId Int
+  articulo   Articulo @relation(fields: [articuloId], references: [id])
+  cantidad   Decimal  @db.Decimal(10, 3) // Cantidad de material por unidad de producto
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  // Un producto no puede tener duplicado el mismo material en su receta
+  @@unique([productoId, articuloId])
+}
+
+// Orden de producción: fabricar X unidades de un producto
+// Al completarse: descuenta Articulo.cantidad y aumenta Inventario.stock
+model OrdenProduccion {
+  id                Int                    @id @default(autoincrement())
+  productoId        Int
+  producto          Producto               @relation(fields: [productoId], references: [id])
+  tallaId           Int?                   // Variante a producir (opcional)
+  talla             Talla?                 @relation(fields: [tallaId], references: [id])
+  colorId           Int?                   // Variante a producir (opcional)
+  color             Color?                 @relation(fields: [colorId], references: [id])
+  cantidadPlanificada Int                  // Cuántas unidades se planea fabricar
+  cantidadProducida   Int    @default(0)   // Cuántas se fabricaron realmente
+  estado            EstadoProduccion       @default(PENDIENTE)
+  usuarioId         Int?                   // Quién registró la orden (ERP)
+  usuario           Usuario?               @relation(fields: [usuarioId], references: [id])
+  observaciones     String?                @db.Text
+  fechaInicio       DateTime?
+  fechaFin          DateTime?
+  createdAt         DateTime               @default(now())
+  updatedAt         DateTime               @updatedAt
+
+  @@index([estado])
+  @@index([productoId])
+}
+
+enum EstadoProduccion {
+  PENDIENTE      // Orden creada, aún no iniciada
+  EN_PROCESO     // Fabricación en curso
+  COMPLETADO     // Producción finalizada, stock actualizado
+  CANCELADO      // Orden cancelada
 }

@@ -4,6 +4,6 @@ export interface PurchaseRepository {
   create(purchase: Purchase): Promise<Purchase>;
   findAll(): Promise<Purchase[]>;
   findById(id: number): Promise<Purchase | null>;
-  update(id: number, purchase: Partial<Purchase>): Promise<Purchase>;
+  anular(id: number): Promise<Purchase>;
   delete(id: number): Promise<void>;
 }

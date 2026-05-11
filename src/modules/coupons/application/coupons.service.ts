@@ -1,13 +1,13 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateCouponDto } from '../infrastructure/http/dto/create-coupon.dto';
-import { PrismaCouponRepository } from '../infrastructure/persistence/prisma-coupon.repository';
+import type { CouponRepository } from '../domain/coupon.repository';
 
 @Injectable()
 export class CouponsService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly couponRepository: PrismaCouponRepository,
+    @Inject('CouponRepository') private readonly couponRepository: CouponRepository,
   ) {}
 
   async create(createCouponDto: CreateCouponDto) {

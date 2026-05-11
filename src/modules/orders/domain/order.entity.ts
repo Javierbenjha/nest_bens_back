@@ -8,10 +8,16 @@ export class Order {
     public readonly items: OrderItem[],
     public subtotal: number = 0,
     public impuesto: number = 0,
-    public descuento: number = 0, // Descuento acumulado de productos
-    public descuentoCupon: number = 0, // Descuento específico del cupón
+    public descuento: number = 0,
+    public descuentoCupon: number = 0,
     public total: number = 0,
     public cuponId: number | null = null,
+    public medioPagoId: number | null = null,
+    public tipoComprobanteId: number | null = null,
+    public direccionEnvio: string | null = null,
+    public observaciones: string | null = null,
+    public origen: 'ERP' | 'ECOMMERCE' = 'ERP',
+    public fechaEntrega: string | null = null,
   ) {
     this.calculateTotals();
   }
@@ -27,13 +33,15 @@ export class Order {
 
   applyCoupon(coupon: Coupon): void {
     if (!coupon.isValid()) {
-      throw new Error('El cupón no es válido, ya expiró o no tiene usos disponibles.');
+      throw new Error(
+        'El cupón no es válido, ya expiró o no tiene usos disponibles.',
+      );
     }
 
     // El descuento del cupón se aplica sobre el subtotal que ya tiene los descuentos por producto
     this.descuentoCupon = coupon.calculateDiscount(this.subtotal);
-    this.descuento += this.descuentoCupon; 
-    
+    this.descuento += this.descuentoCupon;
+
     this.total -= this.descuentoCupon;
     this.cuponId = coupon.id;
   }

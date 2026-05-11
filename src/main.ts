@@ -1,6 +1,7 @@
 import 'dotenv/config'; // <--- ESTA LÍNEA DEBE SER LA PRIMERA
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
@@ -14,6 +15,9 @@ async function bootstrap() {
   app.use(express.json({ limit: '50mb' }));
   app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
+  // Prefijo global para todas las rutas (/api)
+  app.setGlobalPrefix('api');
+
   // Habilitar CORS para permitir peticiones del frontend (ej. localhost:5173)
   app.enableCors();
 
@@ -25,6 +29,21 @@ async function bootstrap() {
       transform: true, // Transforma los payloads a las instancias de los DTO
     }),
   );
+
+  // Configuración de Swagger (OpenAPI)
+  const config = new DocumentBuilder()
+    .setTitle('ERP & Ecommerce API')
+    .setDescription('Documentación de los endpoints del backend para el ERP y Ecommerce')
+    .setVersion('1.0')
+    .addBearerAuth() // Soporte para Autenticación con Token (JWT)
+    .build();
+    
+  const document = SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup('api-docs', app, document, {
+    swaggerOptions: {
+      persistAuthorization: true, // Mantiene el token después de recargar la página
+    },
+  });
 
   // ... resto de tu configuración
   await app.listen(process.env.PORT ?? 3000);

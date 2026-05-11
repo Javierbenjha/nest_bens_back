@@ -15,10 +15,6 @@ export class CreateProductDto {
   precio: number;
 
   @IsNumber()
-  @IsOptional()
-  cantidad?: number;
-
-  @IsNumber()
   categoriaId: number;
 
   @IsNumber()
@@ -42,10 +38,9 @@ export class CreateProductDto {
   @IsOptional()
   sku?: string;
 
-  @IsNumber()
+  @IsString()
   @IsOptional()
-  @Transform(({ value }) => Number(value))
-  descuento?: number;
+  tipoDescuento?: 'PORCENTAJE' | 'VALOR_FIJO' | 'SIN_DESCUENTO';
 
   @IsNumber()
   @IsOptional()
