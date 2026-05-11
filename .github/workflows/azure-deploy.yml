@@ -19,20 +19,20 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Generate Prisma Client
-        run: npx prisma generate
-
       - name: Build
         run: npm run build
+
+      - name: Prune dev dependencies
+        run: npm prune --omit=dev
 
       - name: Prepare deployment package
         run: |
           mkdir -p deploy_pkg
           cp -r dist deploy_pkg/
+          cp -r node_modules deploy_pkg/
           cp -r prisma deploy_pkg/
           cp package.json deploy_pkg/
           cp package-lock.json deploy_pkg/
-          cp startup.sh deploy_pkg/
           echo '[config]' > deploy_pkg/.deployment
           echo 'command = echo skip' >> deploy_pkg/.deployment
 
