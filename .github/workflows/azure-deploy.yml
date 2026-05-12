@@ -33,8 +33,6 @@ jobs:
           cp -r prisma deploy_pkg/
           cp package.json deploy_pkg/
           cp package-lock.json deploy_pkg/
-          echo '[config]' > deploy_pkg/.deployment
-          echo 'command = echo skip' >> deploy_pkg/.deployment
           cd deploy_pkg && zip -r ../deploy.zip . && cd ..
 
       - name: Azure Login
