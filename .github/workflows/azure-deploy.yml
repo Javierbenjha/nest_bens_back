@@ -35,6 +35,7 @@ jobs:
           cp package-lock.json deploy_pkg/
           echo '[config]' > deploy_pkg/.deployment
           echo 'command = echo skip' >> deploy_pkg/.deployment
+          cd deploy_pkg && zip -r ../deploy.zip . && cd ..
 
       - name: Azure Login
         uses: azure/login@v2
@@ -45,4 +46,4 @@ jobs:
         uses: azure/webapps-deploy@v3
         with:
           app-name: tesis-back-benj2024
-          package: deploy_pkg
+          package: deploy.zip
