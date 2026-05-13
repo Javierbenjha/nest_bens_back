@@ -33,6 +33,7 @@ jobs:
           cp -r prisma deploy_pkg/
           cp package.json deploy_pkg/
           cp package-lock.json deploy_pkg/
+          printf 'NodeJsVersion = "20.0.0"\n' > deploy_pkg/oryx-manifest.toml
           cd deploy_pkg && zip -r ../deploy.zip . && cd ..
 
       - name: Azure Login
