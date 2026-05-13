@@ -18,8 +18,14 @@ async function bootstrap() {
   // Prefijo global para todas las rutas (/api)
   app.setGlobalPrefix('api');
 
-  // Habilitar CORS para permitir peticiones del frontend (ej. localhost:5173)
-  app.enableCors();
+  app.enableCors({
+    origin: [
+      'http://localhost:5173',
+      'http://localhost:4173',
+      process.env.FRONTEND_URL,
+    ].filter(Boolean),
+    credentials: true,
+  });
 
   // Habilitar ValidationPipe de manera global
   app.useGlobalPipes(
